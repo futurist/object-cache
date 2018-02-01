@@ -4,9 +4,8 @@ import util from 'util'
 
 test('init', t => {
   const data = [{id:1, a:2, c:3}, {id:2, a:5, c:6}]
-  const d = new db('abc', data)
+  const d = new db(data)
   t.is(d.data, data)
-  t.is(d.name, 'abc')
   t.deepEqual(d.config, {
     idKey: 'id'
   })
@@ -25,7 +24,7 @@ test('find', t => {
     {id:2, parentID:{id:2}, c:6}, 
     {id:3, parentID:{id:3}, c:7}
   ]
-  const d = new db('abc', data, {
+  const d = new db(data, {
     'parentID.id': {multiple: true}
   })
   // console.log(util.inspect(d.index))
@@ -43,7 +42,7 @@ test('delete', t => {
     {id:2, parentID:{id:2}, c:6}, 
     {id:3, parentID:{id:3}, c:7}
   ]
-  const d = new db('abc', data)
+  const d = new db(data)
   t.deepEqual(d.delete('id', 1).ok, 1)
   t.is(data[0], null)
 })
@@ -54,7 +53,7 @@ test('insert', t => {
     {id:2, parentID:{id:2}, c:6}, 
   ]
   const newItem = {id:3, parentID:{id:3}, c:7}
-  const d = new db('abc', data, {
+  const d = new db(data, {
     'parentID.id': {multiple: true}
   })
   t.deepEqual(d.insert(newItem), {ok:1})
@@ -78,7 +77,7 @@ test('insert unique', t => {
     {id:2, parentID:{id:2}, c:6}, 
   ]
   const newItem = {id:2, parentID:{id:3}, c:7}
-  const d = new db('abc', data)
+  const d = new db(data)
   t.true(!!d.insert(newItem).error)
 })
 
@@ -88,7 +87,7 @@ test('update - basic 1', t => {
     {id:2, parentID:{id:2}, c:6}, 
   ]
   const newItem = {id:3, parentID:{id:3}, c:7}
-  const d = new db('abc', data, {
+  const d = new db(data, {
     'parentID.id': {multiple:1}
   })
   t.true(!!d.update('id', 2, newItem).ok)
@@ -121,7 +120,7 @@ test('update - basic 2', t => {
     {id:2, parentID:{id:2}, c:6}, 
   ]
   const newItem = {parentID:{id:3}, x:9}
-  const d = new db('abc', data, {
+  const d = new db(data, {
     'parentID.id': {multiple:1}
   })
 
@@ -163,7 +162,7 @@ test('update - replace/upsert', t => {
   ]
   const newItem = {id:2, parentID:{id:3}, x:9}
   const newItem4 = {id:4, parentID:{id:3}, x:9}
-  const d = new db('abc', data, {
+  const d = new db(data, {
     'parentID.id': {multiple:1}
   })
 
@@ -194,9 +193,6 @@ test('update - replace/upsert', t => {
   
   t.deepEqual(d.find('id',2), { id: 2, parentID: { id: 3 }, x: 9 })
   
-  t.deepEqual(d.find('parentID.id',2), [
-    {id:1, parentID:{id:2}, c:3}
-  ])
   t.deepEqual(d.index, {
     id:{
       1:0,
@@ -208,4 +204,21 @@ test('update - replace/upsert', t => {
       3: [3, 4]
     }
   })
+
+  t.deepEqual(d.find('parentID.id',2), [
+    {id:1, parentID:{id:2}, c:3}
+  ])
+
+})
+
+test('find perf', t=>{
+  const arr = Array.from({length: 1e6}, (val,id) => ({id, n:Math.random()*100}) )
+  const dd = new db(arr)
+  const beginTime = +new Date
+  console.time('find perf')
+  for(let i=10000;i<20000;i++){
+    dd.find('id', i)
+  }
+  console.timeEnd('find perf')
+  t.true(+new Date-beginTime < 100)
 })

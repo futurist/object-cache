@@ -3,7 +3,6 @@ const {isArray} = Array
 const {assign} = Object
 
 /*
-  this.name: String
   this.data: Array of Objects
   this.config: Object {
     idKey: 'id'  // default id index key
@@ -26,9 +25,7 @@ const {assign} = Object
 
 const ERR_DUPLICATE_KEY_ID = 'ERR_DUPLICATE_KEY_ID'
 
-function MemDB (name, dataArray, indexDef, config) {
-  if(name==null) throw Error('table name is required')
-  this.name = name
+function MemDB (dataArray, indexDef, config={}) {
   this.config = assign({
     idKey: 'id'
   }, config)
@@ -46,7 +43,7 @@ function MemDB (name, dataArray, indexDef, config) {
 }
 
 // class methods
-MemDB.prototype.clear = function (name) {
+MemDB.prototype.clear = function () {
   // data is Array, item is Object, always increase(push)
   // when remove, just set to null, not using DELETE!!!
   // https://www.smashingmagazine.com/2012/11/writing-fast-memory-efficient-javascript/
@@ -57,10 +54,14 @@ MemDB.prototype.clear = function (name) {
 }
 
 MemDB.prototype.createIndex = function(key, def) {
-  if(def===null) return
+  if(def===null) return {
+    error: 'createIndex: empty definition, skip create index'
+  }
   def = def || {}
   const {data, index} = this
-  if(key in index) return
+  if(key in index) return {
+    error: 'createIndex: index already exists'
+  }
 
   this.indexDef[key] = def
   const keyObj = index[key] = Object.create(null)
@@ -78,7 +79,7 @@ MemDB.prototype.createIndex = function(key, def) {
     }
 
   })
-  return true
+  return {ok: 1}
 }
 
 MemDB.prototype.find = function (key, id, returnIndex) {
