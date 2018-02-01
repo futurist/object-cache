@@ -132,8 +132,30 @@ MemDB.prototype.delete = function (key, id) {
   return {ok: 1}
 }
 
-MemDB.prototype.update = function (key, id, newItem) {
+MemDB.prototype.update = function (key, id, newItem, config={}) {
+  if(newItem==null) return {ok: 0}
+  const {data, indexDef} = this
+  const def = indexDef[key]
+  if(!def) return {
+    error: 'update cannot find definition:'+key
+  }
 
+  const {replace, upsert} = config
+  let prev = this.find(key, id)
+
+  if(!isEmptyData(prev)){
+    newItem = isArray(prev)
+    ? prev.map(x=> replace ? newItem : assign({}, x, newItem))
+    : replace ? newItem : assign({}, prev, newItem)
+  } else if(!upsert) {
+    return {
+      error: 'update cannot find previous item'
+    }
+  }
+  
+  this.delete(key, id)
+  isArray(newItem) ? newItem.forEach(x=> this.insert(x)) : this.insert(newItem)
+  return {ok:1}
 }
 
 // export the class
@@ -142,5 +164,14 @@ module.exports = MemDB
 function isEmptyData(obj){
   return obj==null
   || isArray(obj) && obj.length==0
+}
+
+function replaceObject(src, dest){
+  for (let key in src) {
+    if (src.hasOwnProperty(key)) {
+      delete src[key]
+    }
+  }
+  return Object.assign(src, dest)
 }
 
