@@ -23,7 +23,7 @@ const {assign} = Object
   }
    */
 
-const ERR_DUPLICATE_KEY_ID = 'ERR_DUPLICATE_KEY_ID'
+const ERR_DUPLICATE = 'ERR_DUPLICATE'
 
 function MemDB (dataArray, indexDef, config={}) {
   this.config = assign({
@@ -116,7 +116,7 @@ MemDB.prototype.insert = function (obj, opt={}) {
     if(def.unique && !(skipUnique.key==key && skipUnique.id==id)
       && !isEmptyData(this.find(key, id))) return {
       error: 'duplicate key of '+key+', id:'+id,
-      code: ERR_DUPLICATE_KEY_ID,
+      code: ERR_DUPLICATE,
       key, id
     }
     if(def.multiple){
