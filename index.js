@@ -88,11 +88,13 @@ MemDB.prototype.find = function (key, id, returnIndex) {
   }
   const d = keyObj[id]
   if(returnIndex) return d
-  return isArray(d) ? d.map(i=>data[i]) : data[d]
+  return isArray(d)
+    ? d.map(i=>data[i]).filter(Boolean)
+    : data[d]
 }
 
 MemDB.prototype.insert = function (obj) {
-  if(obj==null) return
+  if(obj==null) return {ok: 0}
   const {data, index, indexDef} = this
 
   const i = data.length
@@ -103,7 +105,7 @@ MemDB.prototype.insert = function (obj) {
 
     // assign index data code block
     const id = o.got(obj, key)
-    if(def.unique && this.find(key, id)!=null) return {
+    if(def.unique && !isEmptyData(this.find(key, id))) return {
       error: 'duplicate key of '+key+', id:'+id
     }
     if(def.multiple){
@@ -124,7 +126,7 @@ MemDB.prototype.insert = function (obj) {
 
 MemDB.prototype.delete = function (key, id) {
   const d = this.find(key, id, true)
-  if(d==null) return
+  if(isEmptyData(d)) return {ok: 0}
   if(isArray(d)) d.forEach(i=>this.data[i] = null)  // never delete!
   else this.data[d] = null
   return {ok: 1}
@@ -136,4 +138,9 @@ MemDB.prototype.update = function (key, id, newItem) {
 
 // export the class
 module.exports = MemDB
+
+function isEmptyData(obj){
+  return obj==null
+  || isArray(obj) && obj.length==0
+}
 
