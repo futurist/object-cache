@@ -44,7 +44,7 @@ test('delete', t => {
     {id:3, parentID:{id:3}, c:7}
   ]
   const d = new db('abc', data)
-  t.deepEqual(d.delete('id', 1), {ok:1})
+  t.deepEqual(d.delete('id', 1).ok, 1)
   t.is(data[0], null)
 })
 
@@ -124,6 +124,9 @@ test('update - basic 2', t => {
   const d = new db('abc', data, {
     'parentID.id': {multiple:1}
   })
+
+  t.true(/cannot find/.test(d.update('id', 3, newItem).error))
+
   t.true(!!d.update('id', 2, newItem).ok)
 
   t.deepEqual(d.data, [
@@ -152,3 +155,57 @@ test('update - basic 2', t => {
 })
 
 
+
+test('update - replace/upsert', t => {
+  const data = [
+    {id:1, parentID:{id:2}, c:3}, 
+    {id:2, parentID:{id:2}, c:6}, 
+  ]
+  const newItem = {id:2, parentID:{id:3}, x:9}
+  const newItem4 = {id:4, parentID:{id:3}, x:9}
+  const d = new db('abc', data, {
+    'parentID.id': {multiple:1}
+  })
+
+  const config = {upsert:1, replace:1}
+  // console.log(
+  //   // d.update('id', 3, newItem, config),
+  //   // d.update('id', 2, newItem, config),
+  //   util.inspect( d.data )
+  // )
+
+
+  t.true(/duplicate/.test(d.update('id', 3, newItem, config).error))
+  t.true(d.update('id', 3, newItem4, config).ok==1)
+
+  d.delete('id', 4)
+
+  t.true(d.update('id', 2, newItem, config).ok==1)
+
+  t.deepEqual(d.data, [
+    {id:1, parentID:{id:2}, c:3}, 
+    null,
+    null,
+    null,
+    newItem
+  ])
+
+  // console.log(util.inspect( d.find('id',2) ))
+  
+  t.deepEqual(d.find('id',2), { id: 2, parentID: { id: 3 }, x: 9 })
+  
+  t.deepEqual(d.find('parentID.id',2), [
+    {id:1, parentID:{id:2}, c:3}
+  ])
+  t.deepEqual(d.index, {
+    id:{
+      1:0,
+      2:4,
+      4:3,
+    },
+    'parentID.id':{
+      2: [0, 1],  // 1 -> null
+      3: [3, 4]
+    }
+  })
+})

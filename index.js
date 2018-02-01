@@ -24,6 +24,8 @@ const {assign} = Object
   }
    */
 
+const ERR_DUPLICATE_KEY_ID = 'ERR_DUPLICATE_KEY_ID'
+
 function MemDB (name, dataArray, indexDef, config) {
   if(name==null) throw Error('table name is required')
   this.name = name
@@ -93,11 +95,16 @@ MemDB.prototype.find = function (key, id, returnIndex) {
     : data[d]
 }
 
-MemDB.prototype.insert = function (obj) {
+MemDB.prototype.insert = function (obj, opt={}) {
   if(obj==null) return {ok: 0}
-  const {data, index, indexDef} = this
+  const {data, index, indexDef, config} = this
+  const {skipUnique={}} = opt
 
+  if(!(config.idKey in obj)) return {
+    error: 'insert new object lost '+config.idKey
+  }
   const i = data.length
+  data[i] = null  // in case insert failed, indexObj will point to null
   for(let key in indexDef){
     const def = indexDef[key]
     const keyObj = index[key]
@@ -105,8 +112,11 @@ MemDB.prototype.insert = function (obj) {
 
     // assign index data code block
     const id = o.got(obj, key)
-    if(def.unique && !isEmptyData(this.find(key, id))) return {
-      error: 'duplicate key of '+key+', id:'+id
+    if(def.unique && !(skipUnique.key==key && skipUnique.id==id)
+      && !isEmptyData(this.find(key, id))) return {
+      error: 'duplicate key of '+key+', id:'+id,
+      code: ERR_DUPLICATE_KEY_ID,
+      key, id
     }
     if(def.multiple){
       let arr = keyObj[id]
@@ -127,35 +137,40 @@ MemDB.prototype.insert = function (obj) {
 MemDB.prototype.delete = function (key, id) {
   const d = this.find(key, id, true)
   if(isEmptyData(d)) return {ok: 0}
+  
+  const prev = isArray(d) ? d.map(x=>this.data[x]) : this.data[d]
+
   if(isArray(d)) d.forEach(i=>this.data[i] = null)  // never delete!
   else this.data[d] = null
-  return {ok: 1}
+  return {ok: 1, dataIndex: d, deleted: prev}
 }
 
 MemDB.prototype.update = function (key, id, newItem, config={}) {
   if(newItem==null) return {ok: 0}
   const {data, indexDef} = this
-  const def = indexDef[key]
-  if(!def) return {
-    error: 'update cannot find definition:'+key
+  const def = indexDef[key]||{}
+
+  if(!def.unique) return {
+    error: 'update can only update unique key, but the key is '+key
   }
 
   const {replace, upsert} = config
-  let prev = this.find(key, id)
+  const {dataIndex, deleted: prev} = this.delete(key, id)
+  const restore = ()=>!isNaN(dataIndex) && (data[dataIndex] = prev)
 
   if(!isEmptyData(prev)){
-    newItem = isArray(prev)
-    ? prev.map(x=> replace ? newItem : assign({}, x, newItem))
-    : replace ? newItem : assign({}, prev, newItem)
+    newItem = replace ? newItem : assign({}, prev, newItem)
   } else if(!upsert) {
+    restore()
     return {
       error: 'update cannot find previous item'
     }
   }
-  
-  this.delete(key, id)
-  isArray(newItem) ? newItem.forEach(x=> this.insert(x)) : this.insert(newItem)
-  return {ok:1}
+
+  const insertResult = this.insert(newItem)
+  if(!insertResult.ok) restore()
+
+  return insertResult
 }
 
 // export the class
