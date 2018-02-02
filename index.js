@@ -110,12 +110,12 @@ MemDB.prototype.find = function (key, id, returnIndex) {
     : data[d]
 }
 
-MemDB.prototype.findCond = function (cond) {
+MemDB.prototype.findCond = function (cond, returnIndex) {
   if(!cond) return
   const arr = []
   return isArray(cond)
-  ? (cond.forEach(x=>addToSet(arr, this.findMany(x))), arr)
-  : this.findMany(cond)
+  ? (cond.forEach(x=>addToSet(arr, this.findMany(x, returnIndex))), arr)
+  : this.findMany(cond, returnIndex)
 }
 
 MemDB.prototype.findMany = function (obj, returnIndex) {
@@ -126,13 +126,11 @@ MemDB.prototype.findMany = function (obj, returnIndex) {
   let ret
   for(let key in obj){
     if(!o.own(obj, key)) continue
-    const arr = [].concat(this.find(key, obj[key], true))
+    const arr = [].concat(this.find(key, obj[key], returnIndex))
     if(ret==null) ret = arr
     else ret = ret.filter(x=>arr.indexOf(x)>-1)
   }
-  return isArray(ret)
-  ? returnIndex ? ret : ret.map(x=>this.data[x])
-  : ret
+  return ret || []
 }
 
 MemDB.prototype.insert = function (obj, opt={}) {
