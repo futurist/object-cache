@@ -103,11 +103,36 @@ MemDB.prototype.find = function (key, id, returnIndex) {
   if (keyObj==null) {  // null:deleted,  undefined:not exists
     return
   }
-  const d = keyObj[id]
+  const d = isArray(id) ? id.map(i=>keyObj[i]) : keyObj[id]
   if(returnIndex) return d
   return isArray(d)
     ? d.map(i=>data[i]).filter(Boolean)
     : data[d]
+}
+
+MemDB.prototype.search = function (cond) {
+  if(!cond) return
+  const arr = []
+  return isArray(cond)
+  ? (cond.forEach(x=>addToSet(arr, this.findObj(x))), arr)
+  : this.findObj(cond)
+}
+
+MemDB.prototype.findObj = function (obj, returnIndex) {
+  /*
+  obj: Object { id:1, 'parentID.id':[2,3] }
+  return $and of condition
+  */
+  let ret
+  for(let key in obj){
+    if(!o.own(obj, key)) continue
+    const arr = [].concat(this.find(key, obj[key], true))
+    if(ret==null) ret = arr
+    else ret = ret.filter(x=>arr.indexOf(x)>-1)
+  }
+  return isArray(ret)
+  ? returnIndex ? ret : ret.map(x=>this.data[x])
+  : ret
 }
 
 MemDB.prototype.insert = function (obj, opt={}) {
@@ -204,4 +229,9 @@ function replaceObject(src, dest){
   }
   return Object.assign(src, dest)
 }
+
+function addToSet(arr, arr2){
+  arr2.forEach(item=> arr.indexOf( item ) < 0 && arr.push( item ))
+}
+// var a=[]; addToSet(a, [1,2,3,2,1]); console.log(a)
 
