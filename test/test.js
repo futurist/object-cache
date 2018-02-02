@@ -1,6 +1,16 @@
 import db from '../'
 import test from 'ava'
 import util from 'util'
+// import stream from '../stream'
+
+var memwatch = require('memwatch-next')
+memwatch.on('leak', function(info) {
+  console.log('Memory Leak!!!', info)
+})
+memwatch.on('stats', function(info) {
+  console.log(info)
+})
+
 
 test('init', t => {
   const data = [{id:1, a:2, c:3}, {id:2, a:5, c:6}]
@@ -212,7 +222,10 @@ test('update - replace/upsert', t => {
 })
 
 test('find perf', t=>{
-  const arr = Array.from({length: 1e6}, (val,id) => ({id, n:Math.random()*100}) )
+  const {heapUsed} = process.memoryUsage()
+  const arr = Array.from({length: 1e6}, (val,id) => ({
+    id, n: Math.random()*100
+  }) )
   const dd = new db(arr)
   const beginTime = +new Date
   console.time('find perf')
@@ -221,4 +234,5 @@ test('find perf', t=>{
   }
   console.timeEnd('find perf')
   t.true(+new Date-beginTime < 100)
+  console.log('memory usage:', process.memoryUsage().heapUsed - heapUsed)
 })

@@ -10,7 +10,8 @@
     "objutil": "^2.17.2"
   },
   "devDependencies": {
-    "ava": "^0.25.0"
+    "ava": "^0.25.0",
+    "memwatch-next": "^0.3.0"
   },
   "scripts": {
     "test": "ava"
