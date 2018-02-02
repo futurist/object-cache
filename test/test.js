@@ -86,6 +86,34 @@ test('find multiple', t => {
   ])
 })
 
+test('findMany', t => {
+  const data = [
+    {id:1, parentID:{id:2}, c:3}, 
+    {id:2, parentID:{id:2}, c:6}, 
+    {id:3, parentID:{id:3}, c:7}
+  ]
+  const d = new db(data, {
+    'parentID.id': {multiple: true}
+  })
+  // console.log(util.inspect(d.index))
+
+  t.deepEqual(d.findMany({
+    id: [1,2,3],
+    'parentID.id': 3
+  }), [
+    data[2]
+  ])
+
+  t.deepEqual(d.findMany({
+    id: [1,2],
+    'parentID.id': 3
+  }), [
+    
+  ])
+
+})
+
+
 test('findObj', t => {
   const data = [
     {id:1, parentID:{id:2}, c:3}, 
@@ -97,35 +125,7 @@ test('findObj', t => {
   })
   // console.log(util.inspect(d.index))
 
-  t.deepEqual(d.findObj({
-    id: [1,2,3],
-    'parentID.id': 3
-  }), [
-    data[2]
-  ])
-
-  t.deepEqual(d.findObj({
-    id: [1,2],
-    'parentID.id': 3
-  }), [
-    
-  ])
-
-})
-
-
-test('search', t => {
-  const data = [
-    {id:1, parentID:{id:2}, c:3}, 
-    {id:2, parentID:{id:2}, c:6}, 
-    {id:3, parentID:{id:3}, c:7}
-  ]
-  const d = new db(data, {
-    'parentID.id': {multiple: true}
-  })
-  // console.log(util.inspect(d.index))
-
-  t.deepEqual(d.search([{
+  t.deepEqual(d.findObj([{
     id: [1,2,3],
     'parentID.id': 3
   }, {
