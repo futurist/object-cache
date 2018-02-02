@@ -110,7 +110,7 @@ MemDB.prototype.find = function (key, id, returnIndex) {
     : data[d]
 }
 
-MemDB.prototype.findObj = function (cond) {
+MemDB.prototype.findCond = function (cond) {
   if(!cond) return
   const arr = []
   return isArray(cond)

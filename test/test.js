@@ -114,7 +114,7 @@ test('findMany', t => {
 })
 
 
-test('findObj', t => {
+test('findCond', t => {
   const data = [
     {id:1, parentID:{id:2}, c:3}, 
     {id:2, parentID:{id:2}, c:6}, 
@@ -125,7 +125,7 @@ test('findObj', t => {
   })
   // console.log(util.inspect(d.index))
 
-  t.deepEqual(d.findObj([{
+  t.deepEqual(d.findCond([{
     id: [1,2,3],
     'parentID.id': 3
   }, {
