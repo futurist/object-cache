@@ -110,15 +110,15 @@ MemDB.prototype.find = function (key, id, returnIndex) {
     : data[d]
 }
 
-MemDB.prototype.findCond = function (cond, returnIndex) {
+MemDB.prototype.findMany = function (cond, returnIndex) {
   if(!cond) return
   const arr = []
   return isArray(cond)
-  ? (cond.forEach(x=>addToSet(arr, this.findMany(x, returnIndex))), arr)
-  : this.findMany(cond, returnIndex)
+  ? (cond.forEach(x=>addToSet(arr, this.findCond(x, returnIndex))), arr)
+  : this.findCond(cond, returnIndex)
 }
 
-MemDB.prototype.findMany = function (obj, returnIndex) {
+MemDB.prototype.findCond = function (obj, returnIndex) {
   /*
   obj: Object { id:1, 'parentID.id':[2,3] }
   return $and of condition
