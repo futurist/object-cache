@@ -68,15 +68,29 @@ MemDB.prototype.createIndex = function(key, def) {
   data.forEach((v, i)=>{
     if(v==null) return
 
-    // assign index data code block
-    const id = o.got(v, key)
-    if(def.multiple){
-      let arr = keyObj[id]
-      if(!isArray(arr)) arr = keyObj[id] = []
-      arr.push(i)
-    } else {
-      keyObj[id] = i
+    const parts = key.split('.$.')
+    let arr = o.got(v, parts[0])
+    if(isArray(arr)) {
+      for(let i=1;i<parts.length;i++){
+        let t = []
+        arr.forEach(x=> (t = t.concat(o.got(x, parts[i]))))
+        arr = t
+      }
+    }else{
+      arr = [arr]
     }
+    
+    arr.forEach(id=>{
+      // assign index data code block
+      // const id = o.got(v, key)
+      if(def.multiple){
+        let arr = keyObj[id]
+        if(!isArray(arr)) arr = keyObj[id] = []
+        arr.push(i)
+      } else {
+        keyObj[id] = i
+      }
+    })
 
   })
   return {ok: 1}

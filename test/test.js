@@ -28,6 +28,30 @@ test('init', t => {
   }})
 })
 
+
+test('create Index', t => {
+  const data = [
+    {id:1, parentID:[{id:20}, {id:21}], c:3}, 
+    {id:2, parentID:[{id:20}, {id:23}], c:4}, 
+  ]
+  const d = new db(data, {
+    'parentID.$.id': {multiple: true},
+  })
+  // console.log(util.inspect(d.index))
+  t.deepEqual(d.index, {
+    id:{
+      1:0,
+      2:1
+    },
+    'parentID.$.id':{
+      20:[0,1],
+      21: [0],
+      23: [1]
+    }
+  })
+})
+
+
 test('find', t => {
   const data = [
     {id:1, parentID:{id:2}, c:3}, 
