@@ -35,11 +35,13 @@ test('find', t => {
     {id:3, parentID:{id:3}, c:7}
   ]
   const d = new db(data, {
-    'parentID.id': {multiple: true}
+    'parentID.id': {multiple: true},
+    'parentID2.id': {multiple: true},
   })
   // console.log(util.inspect(d.index))
 
   t.deepEqual(d.find('id', 2), data[1])
+  t.deepEqual(d.find('id', 20), undefined)
   t.deepEqual(d.find('parentID.id', 2), [
     data[0], data[1]
   ])
