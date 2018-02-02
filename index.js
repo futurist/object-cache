@@ -130,7 +130,7 @@ MemDB.prototype.findCond = function (obj, returnIndex) {
     if(ret==null) ret = arr
     else ret = ret.filter(x=>arr.indexOf(x)>-1)
   }
-  return ret || []
+  return isArray(ret) ? ret.filter(Boolean) : []
 }
 
 MemDB.prototype.insert = function (obj, opt={}) {
