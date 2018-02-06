@@ -255,8 +255,32 @@ test('update - basic 2', t => {
 })
 
 
-
 test('update - replace/upsert', t => {
+  const data = [
+    {id:1, parentID:{id:2}, c:3}, 
+    {id:2, parentID:{id:2}, c:6}, 
+  ]
+  const newItem = {id:3, parentID:{id:3}, x:9}
+  const d = new db(data)
+  d.update('id', newItem.id, newItem, {replace:true, upsert:true})
+  // console.log(util.inspect(d.data))
+  t.deepEqual(d.data, [
+    {id:1, parentID:{id:2}, c:3}, 
+    {id:2, parentID:{id:2}, c:6}, 
+    newItem
+  ])
+
+  const newItem2 = {id:2, parentID:{id:3}, x:9}
+  d.update('id', newItem2.id, newItem2, {replace:true, upsert:true})
+  t.deepEqual(d.data, [
+    {id:1, parentID:{id:2}, c:3}, 
+    null,
+    newItem,
+    newItem2
+  ])
+})
+
+test('update - replace/upsert with multiple key', t => {
   const data = [
     {id:1, parentID:{id:2}, c:3}, 
     {id:2, parentID:{id:2}, c:6}, 
