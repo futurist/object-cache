@@ -117,10 +117,11 @@ test('findCond with null', t => {
   const data = [
     {id:1, parentID:{id:2}, c:3}, 
     {id:2, parentID:{id:2}, c:6}, 
-    {id:3, parentID:{id:3}, c:7}
+    {id:3, parentID:{id:3}, c:3}
   ]
   const d = new db(data, {
-    'parentID.id': {multiple: true}
+    'parentID.id': {multiple: true},
+    c: {multiple: true}
   })
   // console.log(util.inspect(d.index))
 
@@ -134,9 +135,11 @@ test('findCond with null', t => {
   ])
 
   t.deepEqual(d.findCond({
-    'parentID.id': null
+    'parentID.id': undefined,
+    c: 3
   }), [
-    
+    data[0],
+    data[2]
   ])
 
 })
