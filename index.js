@@ -125,8 +125,10 @@ MemDB.prototype.findCond = function (obj, returnIndex) {
   */
   let ret
   for(let key in obj){
-    if(!o.own(obj, key)) continue
-    const arr = [].concat(this.find(key, obj[key], returnIndex))
+    let val = obj[key]
+    if(!o.own(obj, key) || val==null) continue
+    // to match null, pass val='null'
+    const arr = [].concat(this.find(key, val, returnIndex))
     if(ret==null) ret = arr
     else ret = ret.filter(x=>arr.indexOf(x)>-1)
   }

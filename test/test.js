@@ -113,6 +113,33 @@ test('findCond', t => {
 
 })
 
+test('findCond with null', t => {
+  const data = [
+    {id:1, parentID:{id:2}, c:3}, 
+    {id:2, parentID:{id:2}, c:6}, 
+    {id:3, parentID:{id:3}, c:7}
+  ]
+  const d = new db(data, {
+    'parentID.id': {multiple: true}
+  })
+  // console.log(util.inspect(d.index))
+
+  t.deepEqual(d.findCond({
+    id: [1,2,3],
+    'parentID.id': null
+  }), [
+    data[0],
+    data[1],
+    data[2]
+  ])
+
+  t.deepEqual(d.findCond({
+    'parentID.id': null
+  }), [
+    
+  ])
+
+})
 
 test('findMany', t => {
   const data = [
