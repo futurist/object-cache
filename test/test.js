@@ -51,23 +51,48 @@ test('create Index', t => {
   })
 })
 
+function flatten (list) {
+  // recursively flatten array
+for (var i = 0; i < list.length; i++) {
+  if (Array.isArray(list[i])) {
+    list = list.concat.apply([], list)
+      // check current index again and flatten until there are no more
+      // nested arrays at that index
+    i--
+  }
+}
+return list
+}
 
 test('find', t => {
   const data = [
     {id:1, parentID:{id:2}, c:3}, 
     {id:2, parentID:{id:2}, c:6}, 
-    {id:3, parentID:{id:3}, c:7}
+    {id:3, parentID:{id:3}, c:7},
+    {id:4, c:8},
   ]
   const d = new db(data, {
     'parentID.id': {multiple: true},
     'parentID2.id': {multiple: true},
   })
-  // console.log(util.inspect(d.index))
+  // console.log(
+  //   // util.inspect(d.index),
+  //   d.find('parentID.id', [2,3])
+  // )
 
   t.deepEqual(d.find('id', 2), data[1])
   t.deepEqual(d.find('id', 20), undefined)
   t.deepEqual(d.find('parentID.id', 2), [
     data[0], data[1]
+  ])
+  t.deepEqual(d.find('parentID.id', 'undefined'), [
+    data[3]
+  ])
+  t.deepEqual(d.find('parentID.id', ['undefined', 3]), [
+    data[3], data[2]
+  ])
+  t.deepEqual(d.find('parentID.id', [2,3]), [
+    data[0], data[1], data[2]
   ])
 })
 
