@@ -1,6 +1,6 @@
 const o = require('objutil')
 const {isArray} = Array
-const {assign} = Object
+const {assign, keys} = Object
 
 /*
   this.data: Array of Objects
@@ -27,7 +27,7 @@ const ERR_DUPLICATE = 'ERR_DUPLICATE'
 
 function MemDB (dataArray, indexDef, config={}) {
   this.config = assign({
-    idKey: 'id'
+    idKey: 'id', notKey: '$not'
   }, config)
   indexDef = assign({
     [this.config.idKey]: {unique: true}
@@ -38,7 +38,7 @@ function MemDB (dataArray, indexDef, config={}) {
     this.data = dataArray
   }
   if(indexDef){
-    Object.keys(indexDef).forEach(key=>this.createIndex(key, indexDef[key]))
+    keys(indexDef).forEach(key=>this.createIndex(key, indexDef[key]))
   }
 }
 
@@ -97,15 +97,25 @@ MemDB.prototype.createIndex = function(key, def) {
 }
 
 MemDB.prototype.find = function (key, id, returnIndex) {
-  const {data, index} = this
+  const {data, index, config} = this
+  const {notKey} = config
 
   const keyObj = index[key]
   if (keyObj==null) {  // null:deleted,  undefined:not exists
     return
   }
+
+  // $not?
+  if(!o.isPrimitive(id) && notKey in id){
+    const allIDs = keys(keyObj)
+    const srcArr = [].concat(id[notKey]).map(String)
+    id = allIDs.filter(x=> srcArr.indexOf(x)===-1)
+  }
+
   let d = isArray(id)
-    ? id.concat.apply([], id.map(i=>keyObj[i]))  // flatten if {'parentID.id':[2,3]}
+    ? [].concat.apply([], id.map(i=>keyObj[i]))  // flatten if {'parentID.id':[2,3]}
     : keyObj[id]
+
   if(returnIndex) return d
   return isArray(d)
     ? d.map(i=>data[i]).filter(Boolean)

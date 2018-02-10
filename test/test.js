@@ -17,7 +17,8 @@ test('init', t => {
   const d = new db(data)
   t.is(d.data, data)
   t.deepEqual(d.config, {
-    idKey: 'id'
+    idKey: 'id',
+    notKey: '$not'
   })
   t.deepEqual(d.indexDef, {id: {
     unique: true
@@ -103,13 +104,40 @@ test('find multiple', t => {
     {id:2, parentID:{id:2}, c:6}, 
     {id:3, parentID:{id:3}, c:7}
   ]
-  const d = new db(data)
+  const d = new db(data, {
+    'parentID.id': {multiple: true},
+  })
   // console.log(util.inspect(d.index))
 
   t.deepEqual(d.find('id', [2, 20, 3]), [
     data[1], data[2]
   ])
+  t.deepEqual(d.find('parentID.id', [1,2]), [
+    data[0], data[1]
+  ])
 })
+
+
+test('find $not', t => {
+  const data = [
+    {id:1, parentID:{id:2}, c:3}, 
+    {id:2, parentID:{id:2}, c:6}, 
+    {id:3, parentID:{id:3}, c:7}
+  ]
+  const d = new db(data)
+  // console.log(util.inspect(d.index))
+
+  t.deepEqual(d.find('id', {$not: 3}), [
+    data[0], data[1]
+  ])
+  t.deepEqual(d.find('id', {$not: null}), [
+    data[0], data[1], data[2]
+  ])
+  t.deepEqual(d.find('id', {$not: [2, 20, 3]}), [
+    data[0]
+  ])
+})
+
 
 test('findCond', t => {
   const data = [
@@ -187,6 +215,13 @@ test('findMany', t => {
     id: 1
   }]), [
     data[2], data[0]
+  ])
+
+  t.deepEqual(d.findMany([{
+    id: {$not: 3},
+    'parentID.id': 3
+  }]), [
+    
   ])
 
 })
