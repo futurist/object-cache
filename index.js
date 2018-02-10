@@ -103,11 +103,12 @@ MemDB.prototype.find = function (key, id, returnIndex) {
   if (keyObj==null) {  // null:deleted,  undefined:not exists
     return
   }
-  const d = isArray(id) ? id.map(i=>keyObj[i]) : keyObj[id]
+  let d = isArray(id)
+    ? id.concat.apply([], id.map(i=>keyObj[i]))  // flatten if {'parentID.id':[2,3]}
+    : keyObj[id]
   if(returnIndex) return d
   return isArray(d)
-    ? d.concat.apply([],d)  // flatten if {'parentID.id':[2,3]}
-      .map(i=>data[i]).filter(Boolean)
+    ? d.map(i=>data[i]).filter(Boolean)
     : data[d]
 }
 
