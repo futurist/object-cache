@@ -57,7 +57,7 @@ MemDB.prototype.createIndex = function(key, def) {
   const {data, index, indexDef} = this
   let idx
   if(!isNaN(def)){
-    idx = def
+    idx = def+0
     def = indexDef[key] || {}
   } else {
     def = indexDef[key] = def || indexDef[key] || {}
