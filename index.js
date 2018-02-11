@@ -54,18 +54,21 @@ MemDB.prototype.clear = function () {
 }
 
 MemDB.prototype.createIndex = function(key, def) {
-  if(def===null) return {
-    error: 'createIndex: empty definition, skip create index'
+  const {data, index, indexDef} = this
+  let idx
+  if(!isNaN(def)){
+    idx = def
+    def = indexDef[key] || {}
+  } else {
+    def = indexDef[key] = def || indexDef[key] || {}
   }
-  def = def || {}
-  const {data, index} = this
-  if(key in index) return {
-    error: 'createIndex: index already exists'
-  }
+  
 
-  this.indexDef[key] = def
-  const keyObj = index[key] = Object.create(null)
-  data.forEach((v, i)=>{
+  if(def.skip) return {ok:0}
+
+  const keyObj = index[key] = index[key] || Object.create(null)
+  const createFn = i=>{
+    const v = data[i]
     if(v==null) return
 
     const parts = key.split('.$.')
@@ -79,7 +82,7 @@ MemDB.prototype.createIndex = function(key, def) {
     }else{
       arr = [arr]
     }
-    
+
     arr.forEach(id=>{
       // assign index data code block
       // const id = o.got(v, key)
@@ -92,7 +95,10 @@ MemDB.prototype.createIndex = function(key, def) {
       }
     })
 
-  })
+  }
+
+  if(idx==null) data.forEach((v,i)=>createFn(i))
+  else createFn(idx)
   return {ok: 1}
 }
 
@@ -159,8 +165,7 @@ MemDB.prototype.insert = function (obj, opt={}) {
   data[i] = null  // in case insert failed, indexObj will point to null
   for(let key in indexDef){
     const def = indexDef[key]
-    const keyObj = index[key]
-    if(def==null || keyObj==null) continue
+    if(def==null) continue
 
     // assign index data code block
     const id = o.got(obj, key)
@@ -170,17 +175,11 @@ MemDB.prototype.insert = function (obj, opt={}) {
       code: ERR_DUPLICATE,
       key, id
     }
-    if(def.multiple){
-      let arr = keyObj[id]
-      if(!isArray(arr)) arr = keyObj[id] = []
-      arr.push(i)
-    } else {
-      keyObj[id] = i
-    }
-
   }
 
   data[i] = obj
+
+  keys(indexDef).forEach(key=>this.createIndex(key, i))
 
   return {ok: 1}
 }
@@ -246,4 +245,3 @@ function addToSet(arr, arr2){
   arr2.forEach(item=> arr.indexOf( item ) < 0 && arr.push( item ))
 }
 // var a=[]; addToSet(a, [1,2,3,2,1]); console.log(a)
-
